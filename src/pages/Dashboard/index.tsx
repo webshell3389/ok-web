@@ -13,6 +13,8 @@ export default function Dashboard() {
   const [data, setData] = useState({ concurrent: 0, calls: 0, consume: '0.00', agents: 0 })
   const [loading, setLoading] = useState(true)
 
+  const getCount = (res: any, fallback: string | number) => res?.data?.cnt ?? res?.data ?? fallback
+
   const fetchData = () => {
     Promise.all([
       getCallConcurrent(),
@@ -22,10 +24,10 @@ export default function Dashboard() {
     ])
       .then(([concurrent, calls, consume, agents]: any[]) => {
         setData({
-          concurrent: concurrent?.data || 0,
-          calls: calls?.data || 0,
-          consume: consume?.data || '0.00',
-          agents: agents?.data || 0,
+          concurrent: getCount(concurrent, 0),
+          calls: getCount(calls, 0),
+          consume: getCount(consume, '0.00'),
+          agents: getCount(agents, 0),
         })
       })
       .finally(() => setLoading(false))

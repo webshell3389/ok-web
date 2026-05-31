@@ -23,31 +23,31 @@ export default function App() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
+        <Route path="login" element={<Login />} />
       </Route>
-      <Route element={<MainLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/agent-monitor" element={<AgentMonitor />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/customers/import" element={<CustomerImport />} />
-        <Route path="/customers/create" element={<CustomerForm mode="create" />} />
-        <Route path="/customers/:id" element={<CustomerDetail />} />
-        <Route path="/customers/:id/edit" element={<CustomerForm mode="edit" />} />
-        <Route path="/task-manage" element={<TaskManage />} />
-        <Route path="/task-manage/create" element={<TaskCreate />} />
-        <Route path="/task-manage/:id" element={<TaskDetail />} />
-        <Route path="/task-manage/:id/edit" element={<TaskCreate />} />
-        <Route path="/cdr/calls" element={<CdrCalls />} />
-        <Route path="/cdr/records" element={<CdrRecords />} />
-        <Route path="/report/traffic" element={<ReportTraffic />} />
-        <Route path="/report/agent" element={<ReportAgent />} />
-        <Route path="/report/consume" element={<ReportConsume />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="agent-monitor" element={<AgentMonitor />} />
+        <Route path="customers" element={<Customers />} />
+        <Route path="customers/import" element={<CustomerImport />} />
+        <Route path="customers/create" element={<CustomerForm mode="create" />} />
+        <Route path="customers/:id" element={<CustomerDetail />} />
+        <Route path="customers/:id/edit" element={<CustomerForm mode="edit" />} />
+        <Route path="task-manage" element={<TaskManage />} />
+        <Route path="task-manage/create" element={<TaskCreate />} />
+        <Route path="task-manage/:id" element={<TaskDetail />} />
+        <Route path="task-manage/:id/edit" element={<TaskCreate />} />
+        <Route path="cdr/calls" element={<CdrCalls />} />
+        <Route path="cdr/records" element={<CdrRecords />} />
+        <Route path="report/traffic" element={<ReportTraffic />} />
+        <Route path="report/agent" element={<ReportAgent />} />
+        <Route path="report/consume" element={<ReportConsume />} />
       </Route>
       <Route element={<AgentLayout />}>
-        <Route path="/call-popup" element={<CallPopup />} />
-        <Route path="*" element={<Navigate to="/call-popup" replace />} />
+        <Route path="call-popup" element={<CallPopup />} />
       </Route>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }

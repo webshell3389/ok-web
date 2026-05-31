@@ -10,13 +10,7 @@ export default function AuthLayout() {
   useEffect(() => {
     request.post('index.php?m=index&c=index&f=checkLogin').then((res: any) => {
       if (res?.result?.error === 0) {
-        // loginTemplete: 1=管理端, 2=企业端, null/3=坐席端
-        const lt = res?.data?.loginTemplete
-        if (lt === 1 || lt === 2) {
-          navigate('/dashboard', { replace: true })
-        } else {
-          navigate('/call-popup', { replace: true })
-        }
+        navigate('/dashboard', { replace: true })
       } else {
         setChecking(false)
       }

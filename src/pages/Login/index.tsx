@@ -51,10 +51,9 @@ export default function Login() {
         console.log('登录成功，检查角色')
         // 查角色后跳转
         try {
-          const checkRes: any = await request.post('index.php?m=index&c=index&f=checkLogin')
-          const lt = checkRes?.data?.loginTemplete
-          const target = (lt === 1 || lt === 2) ? '/dashboard' : '/call-popup'
-          console.log('角色:', lt, '跳转到:', target)
+          await request.post('index.php?m=index&c=index&f=checkLogin')
+          const target = '/dashboard'
+          console.log('商户后台登录成功，跳转到:', target)
           message.success('登录成功')
           setTimeout(() => navigate(target, { replace: true }), 300)
         } catch {

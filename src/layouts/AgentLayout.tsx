@@ -11,13 +11,7 @@ export default function AgentLayout() {
   useEffect(() => {
     request.post('index.php?m=index&c=index&f=checkLogin').then((res: any) => {
       if (res?.result?.error === 0) {
-        const lt = res?.data?.loginTemplete
-        // 如果是管理员（1或2），重定向到后台
-        if (lt === 1 || lt === 2) {
-          navigate('/dashboard', { replace: true })
-        } else {
-          setChecking(false) // 是座席，显示页面
-        }
+        setChecking(false)
       } else {
         navigate('/login', { replace: true })
       }
