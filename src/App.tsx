@@ -5,6 +5,7 @@ import AgentLayout from './layouts/AgentLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import AgentMonitor from './pages/AgentMonitor'
+import AgentMonitor2 from './pages/AgentMonitor2'
 import TaskManage from './pages/TaskManage'
 import TaskCreate from './pages/TaskManage/Create'
 import TaskDetail from './pages/TaskManage/Detail'
@@ -29,6 +30,7 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="agent-monitor" element={<AgentMonitor />} />
+        <Route path="agent-monitor-2" element={<AgentMonitor2 />} />
         <Route path="customers" element={<Customers />} />
         <Route path="customers/import" element={<CustomerImport />} />
         <Route path="customers/create" element={<CustomerForm mode="create" />} />

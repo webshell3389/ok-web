@@ -11,6 +11,7 @@ import {
   FileTextOutlined,
   SoundOutlined,
   LogoutOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import request from '../api/request'
 
@@ -19,6 +20,7 @@ const { Header, Sider, Content } = Layout
 const menuItems = [
   { key: '/dashboard', icon: <DashboardOutlined />, label: '仪表盘' },
   { key: '/agent-monitor', icon: <MonitorOutlined />, label: '坐席监控' },
+  { key: '/agent-monitor-2', icon: <TeamOutlined />, label: '坐席监控2' },
   { key: '/customers', icon: <UserOutlined />, label: '客户资料' },
   { key: '/call-popup', icon: <PhoneOutlined />, label: '来电弹屏' },
   { key: '/task-manage', icon: <UnorderedListOutlined />, label: '任务管理' },
