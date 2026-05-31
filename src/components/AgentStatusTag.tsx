@@ -6,6 +6,7 @@ const statusConfig: Record<string, { color: string; text: string }> = {
   busy: { color: 'red', text: '通话中' },
   pause: { color: 'orange', text: '小休' },
   ringing: { color: 'blue', text: '振铃中' },
+  unregistered: { color: 'default', text: '未注册' },
 }
 
 export default function AgentStatusTag({ status }: { status: string }) {
