@@ -17,6 +17,32 @@ interface Agent {
   registered?: boolean
 }
 
+const statusImageMap: Record<string, string> = {
+  online: 'idle-lg.png',
+  idle: 'idle-lg.png',
+  busy: 'busy-lg.png',
+  incall: 'incall-lg.png',
+  pause: 'rest-lg.png',
+  rest: 'rest-lg.png',
+  offline: 'offline-lg.png',
+  unregistered: 'offline-lg.png',
+}
+
+const statusBorderMap: Record<string, string> = {
+  online: '#52c41a',
+  idle: '#52c41a',
+  busy: '#ff4d4f',
+  incall: '#ff4d4f',
+  pause: '#faad14',
+  rest: '#faad14',
+  offline: '#d9d9d9',
+  unregistered: '#d9d9d9',
+}
+
+function getAgentStatusImage(status: string) {
+  return `/static/agent/${statusImageMap[status] || 'offline-lg.png'}`
+}
+
 export default function AgentMonitor() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
@@ -110,7 +136,7 @@ export default function AgentMonitor() {
           pagination={{ current: pagination.current, pageSize: pagination.pageSize, total: pagination.total, onChange: (current, pageSize) => fetchAgents(current, pageSize || 20) }}
           style={{ display: view === 'table' ? 'block' : 'none' }}
         />
-        {view === 'card' && <Row gutter={[16, 16]}>{agents.map((agent) => <Col xs={24} sm={12} md={8} lg={6} key={agent.key}><Card size="small" title={<Space><Checkbox />工号: {agent.StaffNo}</Space>}><p>姓名: {agent.Name}</p><p>状态: <AgentStatusTag status={agent.status} /></p><p>分机号: {agent.sipNu}{agent.registered ? '' : '未注册'}</p></Card></Col>)}</Row>}
+        {view === 'card' && <Row gutter={[16, 16]}>{agents.map((agent) => <Col xs={24} sm={12} md={8} lg={6} key={agent.key}><Card size="small" title={<Space><Checkbox />工号: {agent.StaffNo}</Space>} style={{ borderTop: `3px solid ${statusBorderMap[agent.status] || '#d9d9d9'}` }}><div style={{ display: 'flex', gap: 12, alignItems: 'center' }}><img src={getAgentStatusImage(agent.status)} alt={agent.status} style={{ width: 48, height: 48, objectFit: 'contain' }} /><div><p style={{ margin: '0 0 6px' }}>姓名: {agent.Name}</p><p style={{ margin: '0 0 6px' }}>状态: <AgentStatusTag status={agent.status} /></p><p style={{ margin: 0 }}>分机号: {agent.sipNu}{agent.registered ? '' : '未注册'}</p></div></div></Card></Col>)}</Row>}
       </Card>
     </div>
   )
