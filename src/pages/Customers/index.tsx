@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, Form, Input, Select, Space, Table, Modal, message } from 'antd'
-import { PlusOutlined, UploadOutlined, DownloadOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+import { PlusOutlined, UploadOutlined, DownloadOutlined, DeleteOutlined, ReloadOutlined, ClearOutlined } from '@ant-design/icons'
 import { deleteCustomer, deleteCustomers, exportCustomers, queryCustomers } from '../../api/customer'
 import { unwrapRows, formatUnixTime, getApiErrorMessage } from '../../utils/format'
 
@@ -12,6 +12,7 @@ export default function Customers() {
   const [loading, setLoading] = useState(false)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
+  const [clearing, setClearing] = useState(false)
   const load = (current = 1, pageSize = 20) => {
     setLoading(true)
     queryCustomers({ p: JSON.stringify({ pagination: { current, pageSize }, filter: form.getFieldsValue() }) })
@@ -24,6 +25,40 @@ export default function Customers() {
   useEffect(() => { load() }, [])
   const delOne = (id: string) => Modal.confirm({ title: '确认删除？', onOk: async () => { await deleteCustomer(id); message.success('已删除'); load(pagination.current, pagination.pageSize) } })
   const delBatch = () => Modal.confirm({ title: '确认批量删除？', onOk: async () => { await deleteCustomers(selectedRowKeys.map(String)); message.success('已删除'); setSelectedRowKeys([]); load() } })
+
+  const delAll = () => {
+    Modal.confirm({
+      title: '⚠️ 确认删除全部客户资料？',
+      content: '此操作不可恢复，将删除当前客户下所有客户数据。',
+      okText: '确认删除全部',
+      okType: 'danger',
+      onOk: async () => {
+        setClearing(true)
+        try {
+          // 先查询所有ID（用大页码拉取）
+          const res: any = await queryCustomers({ p: JSON.stringify({ pagination: { current: 1, pageSize: 99999 }, filter: {} }) })
+          const allRows = unwrapRows(res)
+          const allIds = allRows.map((r: any) => String(r.id)).filter(Boolean)
+          if (allIds.length === 0) {
+            message.info('没有客户数据')
+            return
+          }
+          // 批量删除（每次500条）
+          for (let i = 0; i < allIds.length; i += 500) {
+            const batch = allIds.slice(i, i + 500)
+            await deleteCustomers(batch)
+          }
+          message.success(`已删除全部 ${allIds.length} 条客户资料`)
+          load(1)
+        } catch (e: any) {
+          message.error(getApiErrorMessage(e) || '删除失败')
+        } finally {
+          setClearing(false)
+        }
+      }
+    })
+  }
+
   return <div>
     <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}>
       <h2 style={{ margin: 0 }}>客户资料</h2>
@@ -33,6 +68,7 @@ export default function Customers() {
         <Button icon={<UploadOutlined />} onClick={() => navigate('/customers/import')}>导入</Button>
         <Button icon={<DownloadOutlined />} onClick={() => exportCustomers({ p: JSON.stringify({ filter: form.getFieldsValue() }) }).then(() => message.success('已发起导出'))}>导出</Button>
         <Button danger icon={<DeleteOutlined />} onClick={delBatch} disabled={!selectedRowKeys.length}>批量删除</Button>
+        <Button danger icon={<ClearOutlined />} onClick={delAll} loading={clearing}>删除全部</Button>
       </Space>
     </Space>
     <Card style={{ marginBottom: 16 }}><Form form={form} layout="inline" onFinish={() => load(1)}><Form.Item name="keyword"><Input placeholder="名称/号码" /></Form.Item><Form.Item name="gender"><Select allowClear style={{ width: 120 }} options={[{ value: 'male', label: '男' }, { value: 'female', label: '女' }]} placeholder="性别" /></Form.Item><Form.Item><Button type="primary" htmlType="submit">查询</Button></Form.Item></Form></Card>
