@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Table, Card, Row, Col, Button, Space, Tag } from 'antd'
 import { TeamOutlined, PhoneOutlined, MinusCircleOutlined, ReloadOutlined } from '@ant-design/icons'
 import StatCard from '../../components/StatCard'
-import { queryAgents } from '../../api/agent'
+import { queryAgents, queryAgentStatus } from '../../api/agent'
 import { queryTasks } from '../../api/task'
 import { unwrapRows, formatUnixTime } from '../../utils/format'
 
@@ -15,6 +15,15 @@ interface Agent {
   AgentGroup2?: string
   status: string
   registered?: boolean
+  callStartTime?: number
+}
+
+// 格式化秒数为 HH:MM:SS
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
 export default function AgentMonitor2() {
@@ -22,26 +31,82 @@ export default function AgentMonitor2() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ concurrent: 0, inCall: 0, online: 0 })
   const [tasks, setTasks] = useState<any[]>([])
+  const [, setTick] = useState(0)
+  const callStartTimes = useRef<Record<string, number>>({})
 
   const fetchAgents = () => {
     setLoading(true)
     queryAgents({ pagination: { current: 1, pageSize: 100 }, filter: {} })
-      .then((res: any) => {
-        const list: Agent[] = unwrapRows(res).map((item: Agent) => ({
-          ...item,
-          status: item.status || 'unregistered',
-          registered: Boolean(item.status && item.status !== 'unregistered'),
-        }))
+      .then(async (res: any) => {
+        const rows = unwrapRows(res)
+        const agentIds = rows.map((item: any) => item.key)
+        
+        // 获取坐席状态
+        let statusMap: Record<string, any> = {}
+        try {
+          const statusRes: any = await queryAgentStatus(agentIds)
+          statusMap = statusRes?.data?.result || {}
+        } catch {
+          // ignore
+        }
+        
+        // 记录通话开始时间
+        const now = Date.now()
+        rows.forEach((item: any) => {
+          const st = statusMap[item.key]
+          const isInCall = st?.w === '1' && st?.s === '2'
+          if (isInCall && !callStartTimes.current[item.key]) {
+            callStartTimes.current[item.key] = now
+          } else if (!isInCall && callStartTimes.current[item.key]) {
+            delete callStartTimes.current[item.key]
+          }
+        })
+        
+        // 合并状态
+        const list: Agent[] = rows.map((item: any) => {
+          const st = statusMap[item.key]
+          let status = 'offline'
+          let registered = false
+          
+          if (st) {
+            registered = st.sipStatus === '1'
+            if (st.w === '1') {
+              if (st.s === '2') {
+                status = 'incall'
+              } else {
+                status = 'online'
+              }
+            } else {
+              status = registered ? 'offline' : 'unregistered'
+            }
+          }
+          
+          return { ...item, status, registered }
+        })
+        
         setAgents(list)
         
         const counts = { concurrent: 0, inCall: 0, online: 0 }
         list.forEach((a: Agent) => {
-          if (['online', 'idle'].includes(a.status)) counts.online++
-          if (['busy', 'incall'].includes(a.status)) counts.inCall++
+          if (a.status === 'online') counts.online++
+          if (a.status === 'incall') counts.inCall++
         })
         setStats(counts)
       })
       .finally(() => setLoading(false))
+  }
+
+  // 每秒刷新通话时长显示
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // 获取通话时长
+  const getCallDuration = (agentKey: string) => {
+    const start = callStartTimes.current[agentKey]
+    if (!start) return null
+    return formatDuration(Math.floor((Date.now() - start) / 1000))
   }
 
   const fetchTasks = () => {
@@ -154,6 +219,11 @@ export default function AgentMonitor2() {
                       <span style={{ marginTop: 2, fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>
                         {agent.StaffNo}
                       </span>
+                      {agent.status === 'incall' && (
+                        <span style={{ fontSize: 8, color: '#ff4d4f', fontWeight: 'bold' }}>
+                          {getCallDuration(agent.key)}
+                        </span>
+                      )}
                     </div>
                   </Col>
                 ))}
@@ -165,16 +235,28 @@ export default function AgentMonitor2() {
         {/* 右侧：通话信息 */}
         <Col xs={24} lg={10}>
           <Card title="通话信息">
-            <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
-              {stats.inCall > 0 ? (
-                <div>
-                  <p>当前通话中: {stats.inCall} 路</p>
-                  <p>请查看坐席列表了解详情</p>
-                </div>
-              ) : (
+            {stats.inCall > 0 ? (
+              <div style={{ padding: 8 }}>
+                {agents.filter(a => a.status === 'incall').map(agent => (
+                  <div key={agent.key} style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    padding: '8px 0',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}>
+                    <span><strong>分机号:</strong> {agent.sipNu}</span>
+                    <span><strong>工号:</strong> {agent.StaffNo}</span>
+                    <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
+                      {getCallDuration(agent.key)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
                 <p>暂无通话</p>
-              )}
-            </div>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>
