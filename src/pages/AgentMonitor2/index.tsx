@@ -318,7 +318,53 @@ export default function AgentMonitor2() {
                 {filteredAgents.map(agent => {
                   const cfg = STATUS_CONFIG[agent.status]
                   const isInCall = agent.status.startsWith('incall')
-                  const dur = isInCall ? getCallDuration(agent.key) : null
+                  if (isInCall) {
+                    // 通话中：卡片+图标格式
+                    const dur = getCallDuration(agent.key)
+                    return (
+                      <Col key={agent.key} xs={12} sm={8} md={6} lg={6}>
+                        <div
+                          style={{
+                            height: 82,
+                            border: `1px solid ${cfg.borderColor}`,
+                            borderRadius: 8,
+                            background: cfg.bgColor,
+                            padding: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            position: 'relative',
+                            boxShadow: `0 0 0 1px ${cfg.borderColor}40`,
+                          }}
+                        >
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              background: cfg.color,
+                              boxShadow: `0 0 4px ${cfg.color}`,
+                            }}
+                          />
+                          <img
+                            src={`/static/agent/${cfg.img}`}
+                            alt={agent.status}
+                            style={{ width: 48, height: 48, marginRight: 8, flexShrink: 0 }}
+                          />
+                          <div style={{ flex: 1, minWidth: 0, lineHeight: '18px', fontSize: 12 }}>
+                            <div style={{ fontWeight: 'bold', fontSize: 13 }}>{agent.sipNu}</div>
+                            <div style={{ color: '#666', fontSize: 11 }}>{agent.Name}</div>
+                            <div style={{ color: '#ff4d4f', fontWeight: 'bold', fontSize: 11, marginTop: 1 }}>
+                              ⏱ {dur || '00:00'}
+                            </div>
+                          </div>
+                        </div>
+                      </Col>
+                    )
+                  }
+                  // 普通坐席：紧凑行格式
                   return (
                     <Col key={agent.key} xs={8} sm={6} md={4} lg={4} xl={3}>
                       <div
@@ -327,9 +373,9 @@ export default function AgentMonitor2() {
                           alignItems: 'center',
                           gap: 6,
                           padding: '4px 8px',
-                          border: `1px solid ${isInCall ? cfg.color : '#e8e8e8'}`,
+                          border: '1px solid #e8e8e8',
                           borderRadius: 4,
-                          background: isInCall ? cfg.bgColor : '#fafafa',
+                          background: '#fafafa',
                           fontSize: 12,
                           lineHeight: '20px',
                           whiteSpace: 'nowrap',
@@ -346,8 +392,7 @@ export default function AgentMonitor2() {
                           }}
                         />
                         <span style={{ fontWeight: 'bold', minWidth: 40 }}>{agent.StaffNo}</span>
-                        <span style={{ color: cfg.color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{cfg.label}</span>
-                        {dur && <span style={{ color: '#ff4d4f', fontWeight: 'bold', flexShrink: 0 }}>{dur}</span>}
+                        <span style={{ color: cfg.color }}>{cfg.label}</span>
                       </div>
                     </Col>
                   )
