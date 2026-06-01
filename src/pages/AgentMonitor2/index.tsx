@@ -83,14 +83,24 @@ export default function AgentMonitor2() {
         statusMap = statusRes?.data?.result || {}
       } catch { /* ignore */ }
 
-        // 记录通话开始时间 - 使用后端返回的 callStartTime
+        // 记录通话开始时间 - 前端追踪
+        const now = Date.now()
         rows.forEach((item: any) => {
           const st = statusMap[item.key]
           const isInCall = st?.s === '2'
-          if (isInCall && st?.callStartTime && st.callStartTime > 0) {
-            callStartTimes.current[item.key] = st.callStartTime * 1000 // 转换为毫秒
-          } else {
+          const wasInCall = callStartTimes.current[item.key] !== undefined
+          if (isInCall && !wasInCall) {
+            // 刚进入通话，记录开始时间
+            callStartTimes.current[item.key] = now
+          } else if (!isInCall && wasInCall) {
+            // 通话结束，清除
             delete callStartTimes.current[item.key]
+          }
+        })
+        // 清理不在列表中的坐席
+        Object.keys(callStartTimes.current).forEach(key => {
+          if (!rows.find((r: any) => r.key === key)) {
+            delete callStartTimes.current[key]
           }
         })
 
