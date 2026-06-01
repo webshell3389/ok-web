@@ -314,16 +314,44 @@ export default function AgentMonitor2() {
             ) : filteredAgents.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>暂无匹配的坐席</div>
             ) : (
-              <Row gutter={[10, 10]}>
-                {filteredAgents.map(agent => (
-                  <Col key={agent.key} xs={12} sm={8} md={6} lg={6}>
-                    <AgentCard
-                      agent={agent}
-                      cfg={STATUS_CONFIG[agent.status]}
-                      duration={getCallDuration(agent.key)}
-                    />
-                  </Col>
-                ))}
+              <Row gutter={[4, 4]}>
+                {filteredAgents.map(agent => {
+                  const cfg = STATUS_CONFIG[agent.status]
+                  const isInCall = agent.status.startsWith('incall')
+                  const dur = isInCall ? getCallDuration(agent.key) : null
+                  return (
+                    <Col key={agent.key} xs={8} sm={6} md={4} lg={4} xl={3}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          padding: '4px 8px',
+                          border: `1px solid ${isInCall ? cfg.color : '#e8e8e8'}`,
+                          borderRadius: 4,
+                          background: isInCall ? cfg.bgColor : '#fafafa',
+                          fontSize: 12,
+                          lineHeight: '20px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            background: cfg.color,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontWeight: 'bold', minWidth: 40 }}>{agent.StaffNo}</span>
+                        <span style={{ color: cfg.color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{cfg.label}</span>
+                        {dur && <span style={{ color: '#ff4d4f', fontWeight: 'bold', flexShrink: 0 }}>{dur}</span>}
+                      </div>
+                    </Col>
+                  )
+                })}
               </Row>
             )}
           </Card>
@@ -414,80 +442,6 @@ export default function AgentMonitor2() {
           size="small"
         />
       </Card>
-    </div>
-  )
-}
-
-// ====== 坐席卡片组件 ======
-function AgentCard({ agent, cfg, duration }: {
-  agent: Agent
-  cfg: typeof STATUS_CONFIG[AgentStatus]
-  duration: string | null
-}) {
-  const isInCall = agent.status.startsWith('incall')
-  return (
-    <div
-      style={{
-        height: 82,
-        border: `1px solid ${isInCall ? cfg.borderColor : '#e8e8e8'}`,
-        borderRadius: 8,
-        background: isInCall ? cfg.bgColor : '#fff',
-        padding: 6,
-        display: 'flex',
-        alignItems: 'center',
-        position: 'relative',
-        transition: 'all 0.2s',
-        cursor: 'default',
-        boxShadow: isInCall ? `0 0 0 1px ${cfg.borderColor}40` : 'none',
-      }}
-    >
-      {/* 状态指示灯 (左上角) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          background: cfg.color,
-          boxShadow: `0 0 4px ${cfg.color}`,
-        }}
-      />
-
-      {/* 头像 */}
-      <img
-        src={`/static/agent/${cfg.img}`}
-        alt={agent.status}
-        style={{ width: 48, height: 48, marginRight: 8, flexShrink: 0 }}
-      />
-
-      {/* 信息 */}
-      <div style={{ flex: 1, minWidth: 0, lineHeight: '18px', fontSize: 12 }}>
-        <div style={{ fontWeight: 'bold', fontSize: 13 }}>{agent.sipNu}</div>
-        <div style={{ color: '#666', fontSize: 11 }}>{agent.Name}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '0 4px',
-              fontSize: 10,
-              lineHeight: '16px',
-              borderRadius: 3,
-              background: cfg.color + '20',
-              color: cfg.color,
-              fontWeight: 500,
-            }}
-          >
-            {cfg.label}
-          </span>
-        </div>
-        {isInCall && duration && (
-          <div style={{ color: '#ff4d4f', fontWeight: 'bold', fontSize: 11, marginTop: 1 }}>
-            ⏱ {duration}
-          </div>
-        )}
-      </div>
     </div>
   )
 }
