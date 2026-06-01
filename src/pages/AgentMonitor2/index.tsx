@@ -14,6 +14,7 @@ interface Agent {
   AgentGroup1?: string
   AgentGroup2?: string
   status: string
+  inCall?: boolean
   registered?: boolean
   callStartTime?: number
 }
@@ -62,23 +63,26 @@ export default function AgentMonitor2() {
           }
         })
         
-        // 合并状态 - w=1 表示工作中
+        // 合并状态 - w=1 表示工作中，s=2 表示通话中
         const list: Agent[] = rows.map((item: any) => {
           const st = statusMap[item.key]
           let status = 'offline'
           let registered = false
+          let inCall = false
           
           if (st) {
             registered = st.sipStatus === '1'
             if (st.w === '1') {
-              // w=1 就是工作中，s=2 表示通话中，s=1 表示空闲/在线
               status = 'online'
+              if (st.s === '2') {
+                inCall = true
+              }
             } else {
               status = registered ? 'offline' : 'unregistered'
             }
           }
           
-          return { ...item, status, registered }
+          return { ...item, status, registered, inCall }
         })
         
         setAgents(list)
@@ -86,6 +90,7 @@ export default function AgentMonitor2() {
         const counts = { concurrent: 0, inCall: 0, online: 0 }
         list.forEach((a: Agent) => {
           if (a.status === 'online') counts.online++
+          if (a.inCall) counts.inCall++
         })
         setStats(counts)
       })
@@ -224,28 +229,27 @@ export default function AgentMonitor2() {
         {/* 右侧：通话信息 */}
         <Col xs={24} lg={10}>
           <Card title="通话信息">
-            {stats.inCall > 0 ? (
-              <div style={{ padding: 8 }}>
-                {agents.filter(a => a.status === 'incall').map(agent => (
-                  <div key={agent.key} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    padding: '8px 0',
-                    borderBottom: '1px solid #f0f0f0'
-                  }}>
-                    <span><strong>分机号:</strong> {agent.sipNu}</span>
-                    <span><strong>工号:</strong> {agent.StaffNo}</span>
+            <Table
+              dataSource={agents.filter(a => a.inCall)}
+              columns={[
+                { title: '分机号', dataIndex: 'sipNu', key: 'sipNu' },
+                { title: '工号', dataIndex: 'StaffNo', key: 'StaffNo' },
+                { title: '姓名', dataIndex: 'Name', key: 'Name' },
+                { 
+                  title: '时长', 
+                  key: 'duration',
+                  render: (_: any, record: any) => (
                     <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>
-                      {getCallDuration(agent.key)}
+                      {getCallDuration(record.key) || '00:00:00'}
                     </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>
-                <p>暂无通话</p>
-              </div>
-            )}
+                  )
+                },
+              ]}
+              rowKey="key"
+              pagination={false}
+              size="small"
+              locale={{ emptyText: '暂无通话' }}
+            />
           </Card>
         </Col>
       </Row>
