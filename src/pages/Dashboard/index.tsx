@@ -13,16 +13,21 @@ export default function Dashboard() {
   const [data, setData] = useState({ concurrent: 0, calls: 0, consume: '0.00', agents: 0 })
   const [loading, setLoading] = useState(true)
 
-  const getCount = (res: any, fallback: string | number) => res?.data?.cnt ?? res?.data ?? fallback
+  const safeGet = (fn: () => Promise<any>, fallback: any) => fn().catch(() => fallback)
+  const getCount = (res: any, fallback: string | number) => {
+    if (res?.result?.error !== 0) return fallback
+    return res?.data?.cnt ?? res?.data ?? fallback
+  }
 
   const fetchData = () => {
+    setLoading(true)
     Promise.all([
-      getCallConcurrent(),
-      getCallVolumeToday(),
-      getConsumeToday(),
-      getOnlineAgentAmount(),
+      safeGet(getCallConcurrent, { result: { error: 1 } }),
+      safeGet(getCallVolumeToday, { result: { error: 1 } }),
+      safeGet(getConsumeToday, { result: { error: 1 } }),
+      safeGet(getOnlineAgentAmount, { result: { error: 1 } }),
     ])
-      .then(([concurrent, calls, consume, agents]: any[]) => {
+      .then(([concurrent, calls, consume, agents]) => {
         setData({
           concurrent: getCount(concurrent, 0),
           calls: getCount(calls, 0),
