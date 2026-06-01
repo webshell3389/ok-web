@@ -11,6 +11,14 @@ export default defineConfig({
         target: 'http://198.23.133.86:50025',
         changeOrigin: true,
       },
+      '/static': {
+        target: 'http://198.23.133.86:50025',
+        changeOrigin: true,
+      },
+      '/oem': {
+        target: 'http://198.23.133.86:50025',
+        changeOrigin: true,
+      },
     },
   },
   build: {
