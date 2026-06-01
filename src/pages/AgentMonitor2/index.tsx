@@ -119,28 +119,39 @@ export default function AgentMonitor2() {
                 <Button icon={<ReloadOutlined />} onClick={fetchAgents}>刷新</Button>
               </Space>
             }
+            bodyStyle={{ maxHeight: 500, overflowY: 'auto' }}
           >
             {loading ? (
               <div style={{ textAlign: 'center', padding: 20 }}>加载中...</div>
             ) : (
-              <Row gutter={[12, 12]}>
+              <Row gutter={[8, 8]}>
                 {agents.map((agent) => (
-                  <Col key={agent.key} xs={8} sm={6} md={4}>
+                  <Col key={agent.key} xs={6} sm={4} md={3} lg={2}>
                     <div style={{ 
                       display: 'flex', 
                       flexDirection: 'column', 
                       alignItems: 'center',
-                      padding: 8,
-                      border: `2px solid ${statusColorMap[agent.status] || '#d9d9d9'}`,
-                      borderRadius: 8,
-                      background: '#fafafa'
+                      padding: 4,
+                      border: `1px solid ${statusColorMap[agent.status] || '#d9d9d9'}`,
+                      borderRadius: 4,
+                      background: '#fafafa',
+                      position: 'relative'
                     }}>
+                      <div style={{ 
+                        position: 'absolute', 
+                        top: 4, 
+                        right: 4, 
+                        width: 8, 
+                        height: 8, 
+                        borderRadius: '50%', 
+                        background: statusColorMap[agent.status] || '#d9d9d9' 
+                      }} />
                       <img 
                         src={`/static/agent/${statusImageMap[agent.status] || 'offline-lg.png'}`} 
                         alt={agent.status}
-                        style={{ width: 40, height: 40, objectFit: 'contain' }}
+                        style={{ width: 32, height: 32, objectFit: 'contain' }}
                       />
-                      <span style={{ marginTop: 4, fontSize: 12, fontWeight: 'bold' }}>
+                      <span style={{ marginTop: 2, fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>
                         {agent.StaffNo}
                       </span>
                     </div>
