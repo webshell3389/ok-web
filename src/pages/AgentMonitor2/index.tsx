@@ -112,18 +112,26 @@ export default function AgentMonitor2() {
         statusMap = statusRes?.data?.result || {}
       } catch { /* ignore */ }
 
-        // 记录通话开始时间 - 前端追踪 + localStorage 持久化
+        // 记录通话开始时间 - 优先后端 callStartTime，兜底 localStorage
         const now = Date.now()
         let changed = false
         rows.forEach((item: any) => {
           const st = statusMap[item.key]
-          const isInCall = st?.s === '2'
-          const wasInCall = callStartTimes.current[item.key] !== undefined
-          if (isInCall && !wasInCall) {
-            // 刚进入通话，记录开始时间
+          const isInCall = st?.s === '2' || st?.s === '1'
+
+          // 后端有 callStartTime 且有效，用后端的
+          if (isInCall && st?.callStartTime && st.callStartTime > 0) {
+            const backendMs = st.callStartTime * 1000
+            // 只在后端时间比本地更早时更新（避免覆盖已记录的更早时间）
+            if (!callStartTimes.current[item.key] || backendMs < callStartTimes.current[item.key]) {
+              callStartTimes.current[item.key] = backendMs
+              changed = true
+            }
+          } else if (isInCall && !callStartTimes.current[item.key]) {
+            // 后端没返回，兜底用当前时间
             callStartTimes.current[item.key] = now
             changed = true
-          } else if (!isInCall && wasInCall) {
+          } else if (!isInCall && callStartTimes.current[item.key]) {
             // 通话结束，清除
             delete callStartTimes.current[item.key]
             changed = true
