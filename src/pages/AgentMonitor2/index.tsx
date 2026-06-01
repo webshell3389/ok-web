@@ -56,6 +56,35 @@ export default function AgentMonitor2() {
   const [searchText, setSearchText] = useState('')
   const [, setTick] = useState(0)
   const callStartTimes = useRef<Record<string, number>>({})
+  const CALL_START_KEY = 'agent_call_start_times'
+
+  // 从 localStorage 恢复通话开始时间
+  const loadCallStartTimes = () => {
+    try {
+      const saved = localStorage.getItem(CALL_START_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // 清理超过 4 小时的旧记录
+        const now = Date.now()
+        Object.keys(parsed).forEach(key => {
+          if (now - parsed[key] > 4 * 60 * 60 * 1000) {
+            delete parsed[key]
+          }
+        })
+        callStartTimes.current = parsed
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 保存到 localStorage
+  const saveCallStartTimes = () => {
+    try {
+      localStorage.setItem(CALL_START_KEY, JSON.stringify(callStartTimes.current))
+    } catch { /* ignore */ }
+  }
+
+  // 初始化时从 localStorage 恢复
+  loadCallStartTimes()
 
   // 5色环统计卡片配置
   const statCards = [
@@ -83,8 +112,9 @@ export default function AgentMonitor2() {
         statusMap = statusRes?.data?.result || {}
       } catch { /* ignore */ }
 
-        // 记录通话开始时间 - 前端追踪
+        // 记录通话开始时间 - 前端追踪 + localStorage 持久化
         const now = Date.now()
+        let changed = false
         rows.forEach((item: any) => {
           const st = statusMap[item.key]
           const isInCall = st?.s === '2'
@@ -92,17 +122,21 @@ export default function AgentMonitor2() {
           if (isInCall && !wasInCall) {
             // 刚进入通话，记录开始时间
             callStartTimes.current[item.key] = now
+            changed = true
           } else if (!isInCall && wasInCall) {
             // 通话结束，清除
             delete callStartTimes.current[item.key]
+            changed = true
           }
         })
         // 清理不在列表中的坐席
         Object.keys(callStartTimes.current).forEach(key => {
           if (!rows.find((r: any) => r.key === key)) {
             delete callStartTimes.current[key]
+            changed = true
           }
         })
+        if (changed) saveCallStartTimes()
 
       // 合并状态 -> agent list
       const list: Agent[] = rows.map((item: any) => {
