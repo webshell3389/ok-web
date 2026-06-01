@@ -54,7 +54,7 @@ export default function AgentMonitor2() {
         const now = Date.now()
         rows.forEach((item: any) => {
           const st = statusMap[item.key]
-          const isInCall = st?.w === '1' && st?.s === '2'
+          const isInCall = st?.s === '2'
           if (isInCall && !callStartTimes.current[item.key]) {
             callStartTimes.current[item.key] = now
           } else if (!isInCall && callStartTimes.current[item.key]) {
@@ -62,7 +62,7 @@ export default function AgentMonitor2() {
           }
         })
         
-        // 合并状态
+        // 合并状态 - w=1 表示工作中
         const list: Agent[] = rows.map((item: any) => {
           const st = statusMap[item.key]
           let status = 'offline'
@@ -71,11 +71,8 @@ export default function AgentMonitor2() {
           if (st) {
             registered = st.sipStatus === '1'
             if (st.w === '1') {
-              if (st.s === '2') {
-                status = 'incall'
-              } else {
-                status = 'online'
-              }
+              // w=1 就是工作中，s=2 表示通话中，s=1 表示空闲/在线
+              status = 'online'
             } else {
               status = registered ? 'offline' : 'unregistered'
             }
@@ -89,7 +86,6 @@ export default function AgentMonitor2() {
         const counts = { concurrent: 0, inCall: 0, online: 0 }
         list.forEach((a: Agent) => {
           if (a.status === 'online') counts.online++
-          if (a.status === 'incall') counts.inCall++
         })
         setStats(counts)
       })
@@ -119,28 +115,21 @@ export default function AgentMonitor2() {
   useEffect(() => {
     fetchAgents()
     fetchTasks()
-    const timer = setInterval(fetchAgents, 5000)
-    return () => clearInterval(timer)
+    // 不自动刷新坐席列表，只在用户点击刷新时更新
   }, [])
 
   const statusImageMap: Record<string, string> = {
     online: 'idle-lg.png',
-    idle: 'idle-lg.png',
-    busy: 'busy-lg.png',
-    incall: 'incall-lg.png',
+    incall: 'busy-lg.png',
     pause: 'rest-lg.png',
-    rest: 'rest-lg.png',
     offline: 'offline-lg.png',
     unregistered: 'offline-lg.png',
   }
 
   const statusColorMap: Record<string, string> = {
     online: '#52c41a',
-    idle: '#52c41a',
-    busy: '#ff4d4f',
     incall: '#ff4d4f',
     pause: '#faad14',
-    rest: '#faad14',
     offline: '#d9d9d9',
     unregistered: '#d9d9d9',
   }
