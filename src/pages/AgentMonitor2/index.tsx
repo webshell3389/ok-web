@@ -415,40 +415,37 @@ export default function AgentMonitor2() {
             styles={{ body: { maxHeight: 600, overflowY: 'auto' } }}
           >
             {agents.filter(a => a.status.startsWith('incall')).length > 0 ? (
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {agents.filter(a => a.status.startsWith('incall')).map(agent => {
                   const cfg = STATUS_CONFIG[agent.status]
+                  const dur = getCallDuration(agent.key)
                   return (
                     <div
                       key={agent.key}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 8px',
-                        marginBottom: 8,
-                        borderRadius: 8,
-                        background: cfg.bgColor,
-                        border: `1px solid ${cfg.color}20`,
+                        gap: 8,
+                        padding: '6px 10px',
+                        borderRadius: 4,
+                        background: '#fafafa',
+                        fontSize: 13,
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <img
-                          src={`/static/agent/${cfg.img}`}
-                          alt={agent.status}
-                          style={{ width: 36, height: 36 }}
-                        />
-                        <div>
-                          <div style={{ fontWeight: 'bold', fontSize: 14 }}>{agent.sipNu}</div>
-                          <div style={{ fontSize: 11, color: '#666' }}>工号: {agent.StaffNo}</div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <Tag color={cfg.color} style={{ margin: 0, fontSize: 11 }}>{cfg.label}</Tag>
-                        <div style={{ color: '#ff4d4f', fontWeight: 'bold', fontSize: 16, marginTop: 2 }}>
-                          {getCallDuration(agent.key) || '00:00'}
-                        </div>
-                      </div>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: cfg.color,
+                          boxShadow: `0 0 4px ${cfg.color}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ fontWeight: 'bold', minWidth: 45 }}>{agent.StaffNo}</span>
+                      <span style={{ color: cfg.color, flex: 1 }}>{cfg.label}</span>
+                      <span style={{ color: '#ff4d4f', fontWeight: 'bold' }}>{dur || '00:00'}</span>
                     </div>
                   )
                 })}
