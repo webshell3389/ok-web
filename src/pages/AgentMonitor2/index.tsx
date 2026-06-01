@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Table, Card, Row, Col, Button, Space, Checkbox, Tag } from 'antd'
+import { Table, Card, Row, Col, Button, Space, Tag } from 'antd'
 import { TeamOutlined, PhoneOutlined, MinusCircleOutlined, ReloadOutlined } from '@ant-design/icons'
-import AgentStatusTag from '../../components/AgentStatusTag'
 import StatCard from '../../components/StatCard'
 import { queryAgents } from '../../api/agent'
 import { queryTasks } from '../../api/task'
@@ -23,8 +22,6 @@ export default function AgentMonitor2() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ concurrent: 0, inCall: 0, online: 0 })
   const [tasks, setTasks] = useState<any[]>([])
-  const [selectedAgentKeys, setSelectedAgentKeys] = useState<React.Key[]>([])
-  const [selectedTaskKeys, setSelectedTaskKeys] = useState<React.Key[]>([])
 
   const fetchAgents = () => {
     setLoading(true)
@@ -61,43 +58,29 @@ export default function AgentMonitor2() {
     return () => clearInterval(timer)
   }, [])
 
-  const agentColumns = [
-    {
-      title: '',
-      width: 40,
-      render: (_: any, __: any, index: number) => <Checkbox checked={selectedAgentKeys.includes(index)} onChange={(e) => {
-        if (e.target.checked) {
-          setSelectedAgentKeys([...selectedAgentKeys, index])
-        } else {
-          setSelectedAgentKeys(selectedAgentKeys.filter(k => k !== index))
-        }
-      }} />,
-    },
-    { title: '工号', dataIndex: 'StaffNo', key: 'StaffNo', width: 80 },
-    { title: '姓名', dataIndex: 'Name', key: 'Name', width: 80 },
-    { title: '分机号', dataIndex: 'sipNu', key: 'sipNu', width: 80 },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (s: string) => <AgentStatusTag status={s} />,
-    },
-    { title: '班组', dataIndex: 'AgentGroup1', key: 'AgentGroup1', width: 100 },
-  ]
+  const statusImageMap: Record<string, string> = {
+    online: 'idle-lg.png',
+    idle: 'idle-lg.png',
+    busy: 'busy-lg.png',
+    incall: 'incall-lg.png',
+    pause: 'rest-lg.png',
+    rest: 'rest-lg.png',
+    offline: 'offline-lg.png',
+    unregistered: 'offline-lg.png',
+  }
+
+  const statusColorMap: Record<string, string> = {
+    online: '#52c41a',
+    idle: '#52c41a',
+    busy: '#ff4d4f',
+    incall: '#ff4d4f',
+    pause: '#faad14',
+    rest: '#faad14',
+    offline: '#d9d9d9',
+    unregistered: '#d9d9d9',
+  }
 
   const taskColumns = [
-    {
-      title: '',
-      width: 40,
-      render: (_: any, __: any, index: number) => <Checkbox checked={selectedTaskKeys.includes(index)} onChange={(e) => {
-        if (e.target.checked) {
-          setSelectedTaskKeys([...selectedTaskKeys, index])
-        } else {
-          setSelectedTaskKeys(selectedTaskKeys.filter(k => k !== index))
-        }
-      }} />,
-    },
     { title: 'ID', dataIndex: 'taskId', key: 'taskId', width: 60 },
     { title: '任务名称', dataIndex: 'name', key: 'name', width: 120 },
     { title: '总数', dataIndex: 'calleeAmount', key: 'calleeAmount', width: 60 },
@@ -137,14 +120,34 @@ export default function AgentMonitor2() {
               </Space>
             }
           >
-            <Table
-              dataSource={agents}
-              columns={agentColumns}
-              rowKey="key"
-              loading={loading}
-              pagination={{ pageSize: 20 }}
-              size="small"
-            />
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 20 }}>加载中...</div>
+            ) : (
+              <Row gutter={[12, 12]}>
+                {agents.map((agent) => (
+                  <Col key={agent.key} xs={8} sm={6} md={4}>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center',
+                      padding: 8,
+                      border: `2px solid ${statusColorMap[agent.status] || '#d9d9d9'}`,
+                      borderRadius: 8,
+                      background: '#fafafa'
+                    }}>
+                      <img 
+                        src={`/static/agent/${statusImageMap[agent.status] || 'offline-lg.png'}`} 
+                        alt={agent.status}
+                        style={{ width: 40, height: 40, objectFit: 'contain' }}
+                      />
+                      <span style={{ marginTop: 4, fontSize: 12, fontWeight: 'bold' }}>
+                        {agent.StaffNo}
+                      </span>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            )}
           </Card>
         </Col>
         
